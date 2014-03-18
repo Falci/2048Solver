@@ -22,11 +22,19 @@ var KeyName = {
 };
 
 var Solver = {
+	leftCount: 0,
 	move: function(){	
 		var next = this.nextMove( this.bestMove() );
-		console.log('moving to: '+KeyName[next]);
 		
 		sendKey( next );
+		if(next === Key.LEFT){
+			if(this.leftCount++ > 10){
+				this.leftCount = 0;
+				document.querySelector(".retry-button").click();
+			}
+			
+			sendKey(Key.RIGHT);
+		}
 	},
 	nextMove: function(dir){	
 		if( this.canMoveTo(dir) ) return dir;
@@ -41,9 +49,7 @@ var Solver = {
 			return Key.RIGHT;
 		}
 		
-		if( dir === Key.RIGTH){
-			return this.nextMove(Key.UP);
-		}
+		return this.nextMove(Key.UP);
 	},
 
 	canMoveTo: function(direction){
@@ -109,14 +115,35 @@ var Solver = {
 		
 		return false;
 	},
-
+	lastZeroUpDown: false,
 	bestMove: function(){
 		var toUp = this.maxTileMovingUp();
 		var toRight = this.maxTileMovingRight();
 		
-		if( Math.max(toUp, toRight) === toUp){
-			return Key.UP;
+		var max = Math.max(toUp, toRight);		
+		//if(!max) return Math.round(Math.random()) ? Key.UP : Key.DOWN;
+		
+		if( !max ){
+			this.lastZeroUpDown = !this.lastZeroUpDown;
 		} 
+		
+		if( max == 1024){
+			
+			clearInterval(timer);
+			timer = false;
+			
+			alert("2048!")
+		}
+		
+		if( max && toUp === toRight ){
+			return Key.RIGHT;
+		
+		}
+		
+		if( max === toUp ){
+			return this.lastZeroUpDown ? Key.UP : Key.DOWN;
+		}
+		
 		
 		return Key.RIGHT;
 	},
@@ -129,7 +156,8 @@ var Solver = {
                 var topTile = this.get(x, y-1);
                 
                 if( thisTile && thisTile === topTile ){
-                    max = Math.max(max, thisTile);
+                    //max = Math.max(max, thisTile);
+					max++;
                 }
             }
         }
@@ -143,7 +171,8 @@ var Solver = {
                 var topTile = this.get(x-1, y);
                 
                 if( thisTile && thisTile === topTile ){
-                    max = Math.max(max, thisTile);
+                    //max = Math.max(max, thisTile);
+					max++;
                 }
             }
         }
@@ -210,7 +239,8 @@ window.addEventListener('load', function(){
 				Solver.move();
 			}, '100');
 		} else {
-			clearInterval(timer)
+			clearInterval(timer);
+			timer = false;
 		}
 	});
 	
